@@ -127,7 +127,8 @@ v12 <- V[1,2]
 v22 <- V[2,2]
 
 lifespan %>% 
-  mutate(a_hat = a_hat,
+  mutate(hazard = dweibull(lifespan, shape = a_hat, scale = b_hat)/(1-pweibull(lifespan, shape = a_hat, scale = b_hat)),
+         a_hat = a_hat,
          b_hat = b_hat,
          g.a = (1/b_hat) * ((lifespan/b_hat)^(a_hat)) * (1 + (a_hat/b_hat) * (log(lifespan/b_hat))),
          g.b = ((-1)*(1/(b_hat^2))) * (a_hat * ((lifespan/b_hat)^(a_hat-1)) + (a_hat - 1 ) * ((lifespan/b_hat)^(a_hat-2)) * lifespan),
@@ -136,22 +137,12 @@ lifespan %>%
          v12 = v12,
          v22 = v22,
          se.q = sqrt(g.a * g.a * v11 + g.a * g.b * v21 + g.a * g.b * v12 + g.b * g.b * v22),
-         ci_low = hazard - 1.96 * sq.q,
-         ci_high = hazard + 1.96 * sq.q,
-         )
+         ci_low = hazard - 1.96 * se.q,
+         ci_high = hazard + 1.96 * se.q
+         ) -> lifespan_ci
   
+# Plotting the final result of the delta method for h(t)
+plot(lifespan_ci$lifespan, lifespan_ci$hazard)
+lines(lifespan_ci$ci_low)
+lines(lifespan_ci$ci_high)
 
-# now gradient
-g.a <- (1/b_hat) * ((lifespan/b_hat)^(a_hat)) * (1 + (a_hat/b_hat) * (log(lifespan/b_hat)))
-g.b <- ((-1)*(1/(b_hat^2))) * (a_hat * ((lifespan/b_hat)^(a_hat-1)) + (a_hat - 1 ) * ((lifespan/b_hat)^(a_hat-2)) * lifespan)
-
-
-gradient <- c(g.a, g.b)
-
-se.q <- sqrt(t(gradient) %*% V %*% gradient)
-
-
-#    confidence interval for q 
-c(q.hat - 1.96 * se.q , q.hat + 1.96 * se.q)
-# let's add 50 to obtain original ages
-c(q.hat - 1.96 * se.q , q.hat + 1.96 * se.q)  + 50
