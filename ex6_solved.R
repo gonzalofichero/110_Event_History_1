@@ -39,10 +39,10 @@ mle.w <- optim(c(a.start, b.start), logL.W, lifespans=age2, control=list(fnscale
 
 
 # Optimized a is
-mle.w$par[1]
+a_hat <- mle.w$par[1]
 
 # Optimized b is
-mle.w$par[2]
+b_hat <- mle.w$par[2]
 
 
 ################################################################################
@@ -74,3 +74,52 @@ lines(0:50, rev(pweibull(0:50, shape=mle.w$par[1], scale=mle.w$par[2])), col="re
 title(main="Survival function (after removing infant deaths)", font.main=1)
 
 
+
+################################################################################
+# Q4. What are the standard errors for a and b? Please give 95% confidence intervals for the two
+# parameters. Are the two estimates correlated?
+
+# Build variance-covariance from Hessian 
+V <- solve(-mle.w$hessian)      # inverse of negative Hessian
+
+#  square root of diagonal elements are the s.e. of a and b
+sqrt(diag(V))
+# parameter estimates correlated?
+cov2cor(V)
+
+# CI for a and b (assuming 1-alpha=95%)
+se.a <- sqrt(diag(V)) [1]
+se.b <- sqrt(diag(V)) [2]
+
+# Confidence intervals for both a and b (estimated) for Weibull function
+c(a_hat - 1.96*se.a , a_hat + 1.96*se.a) 
+c(b_hat - 1.96*se.b , b_hat + 1.96*se.b) 
+
+
+# Q5. As a and b have some uncertainty, also the estimated hazard, which depends on a and b,
+# has uncertainty, that is, it has a standard error. Derive the standard error for h(t) and plot a
+# 95% confidence interval around the hazard (see item 2.).
+
+
+# --- estimate median life span 
+q.hat <- 1/b.hat * log(1 - b.hat*log(0.5)/a.hat )
+q.hat  # Median age is q.hat+50
+
+plot(0:60, 1-exp(- a.hat/b.hat *(exp(b.hat*(0:60))-1)), type="l", lwd=2,
+     xlab="x", ylab="F(x)")
+abline(h=0.5, lty=2)
+
+
+C <- b.hat * log(0.5) / a.hat
+# now gradient
+g.a <- 1/(a.hat * b.hat) * C/(1-C)
+g.b <- -1/b.hat^2 *(log(1-C) + C/(1-C))
+gradient <- c(g.a, g.b)
+
+se.q <- sqrt( t(gradient) %*% V %*% gradient)
+se.q      # is 1x1 
+
+#    confidence interval for q 
+c(q.hat - 1.96 * se.q , q.hat + 1.96 * se.q)
+# let's add 50 to obtain original ages
+c(q.hat - 1.96 * se.q , q.hat + 1.96 * se.q)  + 50
