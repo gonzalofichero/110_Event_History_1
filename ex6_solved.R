@@ -1,4 +1,5 @@
 library(tidyverse)
+set.seed(42)
 
 
 # In the lecture video the data on female fruitflies were introduced and the Weibull distribution
@@ -49,8 +50,6 @@ b_hat <- mle.w$par[2]
 
 ################################################################################
 # Q2. Plot the resulting hazard rate h(t) and interpret briefly
-
-
 
 
 # Optimized Weibull hazard
@@ -146,3 +145,39 @@ plot(lifespan_ci$lifespan, lifespan_ci$hazard)
 lines(lifespan_ci$ci_low)
 lines(lifespan_ci$ci_high)
 
+
+
+###################################################################################################
+# Q5. Similarly, the estimated Weibull survival function S(t) has a standard
+# error. Is this s.e. uniform or does it change with t? Can you explain the result?
+
+
+# Hazard function
+lifespan_surv <- as.data.frame(seq(1,60, by = 1))
+names(lifespan_surv) <- "lifespan"
+
+v11 <- V[1,1]
+v21 <- V[2,1]
+v12 <- V[1,2]
+v22 <- V[2,2]
+
+lifespan_surv %>% 
+  mutate(survival = (pweibull(lifespan, shape = a_hat, scale = b_hat, lower.tail = FALSE)),
+         a_hat = a_hat,
+         b_hat = b_hat,
+         g.a = (-1)*exp((-1)*((lifespan/b_hat)^a_hat)) * ((lifespan/b_hat)^a_hat) * log(lifespan/b_hat),
+         g.b = (a_hat/b_hat)*exp((-1)*((lifespan/b_hat)^a_hat)) * ((lifespan/b_hat)^a_hat),
+         v11 = v11,
+         v21 = v21,
+         v12 = v12,
+         v22 = v22,
+         se.q = sqrt(g.a * g.a * v11 + g.a * g.b * v21 + g.a * g.b * v12 + g.b * g.b * v22),
+         ci_low = hazard - 1.96 * se.q,
+         ci_high = hazard + 1.96 * se.q
+  ) -> lifespan_surv_ci
+
+
+# Plotting the final result of the delta method for h(t)
+plot(lifespan_surv_ci$lifespan, lifespan_surv_ci$survival)
+lines(lifespan_surv_ci$ci_low, col="red", lwd=2)
+lines(lifespan_surv_ci$ci_high, col="blue", lwd=2)
