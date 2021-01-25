@@ -83,7 +83,7 @@ n <- sum(no.age.death)
 F.emp <- cumsum(no.age.death)/n   # empirical cdf 
 S.emp <- 1 - F.emp                # S = 1 - F
 plot(age.death, S.emp, type="s")  # plot as step function
-lines(0:50, rev(pweibull(0:50, shape=mle.w$par[1], scale=mle.w$par[2])), col="red", lwd=2) #add optimized Weibull
+lines(0:50, pweibull(0:50, shape=mle.w$par[1], scale=mle.w$par[2], lower.tail = FALSE), col="red", lwd=2) #add optimized Weibull
 title(main="Survival function (after removing infant deaths)", font.main=1)
 
 
