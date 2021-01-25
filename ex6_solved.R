@@ -48,17 +48,29 @@ mle.w$par[2]
 ################################################################################
 # Q2. Plot the resulting hazard rate h(t) and interpret briefly
 
-# Q3. Plot the resulting survival function from the estimated Weibull distribution and add the
-# empirical survival function in the same figure. From the figure, do you think that the
-# Weibull distribution is a good model?
-
 # Plotting real data vs optimized model
 hist(age2, freq=FALSE, ylim = c(0,0.06))
 lines(density(age2, adjust =2), col="black", lwd = 2)
 lines(0:50, dweibull(0:50, shape=mle.w$par[1], scale=mle.w$par[2]), col="red", lwd=2)
 
-# Adding mean of real vs optimized
-#abline(v = mean(age2), col="black", lwd=2)
-#abline(v = mean(pweibull(0:50, shape=mle.w$par[1], scale=mle.w$par[2])), col="red", lwd=2)
+
+################################################################################
+# Q3. Plot the resulting survival function from the estimated Weibull distribution and add the
+# empirical survival function in the same figure. From the figure, do you think that the
+# Weibull distribution is a good model?
+
+
+# Empirical Survival function
+
+age.death <- sort(unique(age2))   # unique observed ages at death
+no.age.death <- table(age2)       # counts
+
+#  what is empirical survival function? Proportion surviving age t
+n <- sum(no.age.death)
+F.emp <- cumsum(no.age.death)/n   # empirical cdf 
+S.emp <- 1 - F.emp                # S = 1 - F
+plot(age.death, S.emp, type="s")  # plot as step function
+lines(0:50, rev(pweibull(0:50, shape=mle.w$par[1], scale=mle.w$par[2])), col="red", lwd=2) #add optimized Weibull
+title(main="Survival function (after removing infant deaths)", font.main=1)
 
 
