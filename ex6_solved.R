@@ -1,3 +1,5 @@
+library(tidyverse)
+
 
 # In the lecture video the data on female fruitflies were introduced and the Weibull distribution
 # looked like a promising candidate model. Use these data (again remove the first two days and
@@ -48,21 +50,26 @@ b_hat <- mle.w$par[2]
 ################################################################################
 # Q2. Plot the resulting hazard rate h(t) and interpret briefly
 
-# Plotting real data vs optimized model
-hist(age2, freq=FALSE, ylim = c(0,0.06))
-lines(density(age2, adjust =2), col="black", lwd = 2)
-lines(0:60, dweibull(0:60, shape=mle.w$par[1], scale=mle.w$par[2]), col="red", lwd=2)
+
 
 
 # Optimized Weibull hazard
 hazard <- dweibull(1:60, shape = a_hat, scale = b_hat)/(1-pweibull(1:60, shape = a_hat, scale = b_hat))
-plot(hazard)
+plot(log(hazard))
 
 
 ################################################################################
 # Q3. Plot the resulting survival function from the estimated Weibull distribution and add the
 # empirical survival function in the same figure. From the figure, do you think that the
 # Weibull distribution is a good model?
+
+
+# Plotting real data vs optimized model: f(t)
+# And then pass to S(t)
+hist(age2, freq=FALSE, ylim = c(0,0.06))
+lines(density(age2, adjust =2), col="black", lwd = 2)
+lines(0:60, dweibull(0:60, shape=mle.w$par[1], scale=mle.w$par[2]), col="red", lwd=2)
+
 
 
 # Empirical Survival function
@@ -108,23 +115,41 @@ c(b_hat - 1.96*se.b , b_hat + 1.96*se.b)
 # 95% confidence interval around the hazard (see item 2).
 
 
-# --- estimate median life span 
-q.hat <- 1/b.hat * log(1 - b.hat*log(0.5)/a.hat )
-q.hat  # Median age is q.hat+50
+# Hazard function
+hazard
 
-plot(0:60, 1-exp(- a.hat/b.hat *(exp(b.hat*(0:60))-1)), type="l", lwd=2,
-     xlab="x", ylab="F(x)")
-abline(h=0.5, lty=2)
+lifespan <- as.data.frame(seq(1,60, by = 1))
+names(lifespan) <- "lifespan"
 
+v11 <- V[1,1]
+v21 <- V[2,1]
+v12 <- V[1,2]
+v22 <- V[2,2]
 
-C <- b.hat * log(0.5) / a.hat
+lifespan %>% 
+  mutate(a_hat = a_hat,
+         b_hat = b_hat,
+         g.a = (1/b_hat) * ((lifespan/b_hat)^(a_hat)) * (1 + (a_hat/b_hat) * (log(lifespan/b_hat))),
+         g.b = ((-1)*(1/(b_hat^2))) * (a_hat * ((lifespan/b_hat)^(a_hat-1)) + (a_hat - 1 ) * ((lifespan/b_hat)^(a_hat-2)) * lifespan),
+         v11 = v11,
+         v21 = v21,
+         v12 = v12,
+         v22 = v22,
+         se.q = sqrt(g.a * g.a * v11 + g.a * g.b * v21 + g.a * g.b * v12 + g.b * g.b * v22),
+         ci_low = hazard - 1.96 * sq.q,
+         ci_high = hazard + 1.96 * sq.q,
+         )
+  
+
 # now gradient
-g.a <- 1/(a.hat * b.hat) * C/(1-C)
-g.b <- -1/b.hat^2 *(log(1-C) + C/(1-C))
+g.a <- (1/b_hat) * ((lifespan/b_hat)^(a_hat)) * (1 + (a_hat/b_hat) * (log(lifespan/b_hat)))
+g.b <- ((-1)*(1/(b_hat^2))) * (a_hat * ((lifespan/b_hat)^(a_hat-1)) + (a_hat - 1 ) * ((lifespan/b_hat)^(a_hat-2)) * lifespan)
+
+
 gradient <- c(g.a, g.b)
 
-se.q <- sqrt( t(gradient) %*% V %*% gradient)
-se.q      # is 1x1 
+se.q <- sqrt(t(gradient) %*% V %*% gradient)
+
 
 #    confidence interval for q 
 c(q.hat - 1.96 * se.q , q.hat + 1.96 * se.q)
