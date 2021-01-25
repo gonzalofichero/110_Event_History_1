@@ -51,7 +51,12 @@ b_hat <- mle.w$par[2]
 # Plotting real data vs optimized model
 hist(age2, freq=FALSE, ylim = c(0,0.06))
 lines(density(age2, adjust =2), col="black", lwd = 2)
-lines(0:50, dweibull(0:50, shape=mle.w$par[1], scale=mle.w$par[2]), col="red", lwd=2)
+lines(0:60, dweibull(0:60, shape=mle.w$par[1], scale=mle.w$par[2]), col="red", lwd=2)
+
+
+# Optimized Weibull hazard
+hazard <- dweibull(1:60, shape = a_hat, scale = b_hat)/(1-pweibull(1:60, shape = a_hat, scale = b_hat))
+plot(hazard)
 
 
 ################################################################################
@@ -65,6 +70,7 @@ lines(0:50, dweibull(0:50, shape=mle.w$par[1], scale=mle.w$par[2]), col="red", l
 age.death <- sort(unique(age2))   # unique observed ages at death
 no.age.death <- table(age2)       # counts
 
+
 #  what is empirical survival function? Proportion surviving age t
 n <- sum(no.age.death)
 F.emp <- cumsum(no.age.death)/n   # empirical cdf 
@@ -75,7 +81,7 @@ title(main="Survival function (after removing infant deaths)", font.main=1)
 
 
 
-################################################################################
+#################################################################################################
 # Q4. What are the standard errors for a and b? Please give 95% confidence intervals for the two
 # parameters. Are the two estimates correlated?
 
@@ -88,17 +94,18 @@ sqrt(diag(V))
 cov2cor(V)
 
 # CI for a and b (assuming 1-alpha=95%)
-se.a <- sqrt(diag(V)) [1]
-se.b <- sqrt(diag(V)) [2]
+se.a <- sqrt(diag(V))[1]
+se.b <- sqrt(diag(V))[2]
 
 # Confidence intervals for both a and b (estimated) for Weibull function
 c(a_hat - 1.96*se.a , a_hat + 1.96*se.a) 
 c(b_hat - 1.96*se.b , b_hat + 1.96*se.b) 
 
 
+###################################################################################################
 # Q5. As a and b have some uncertainty, also the estimated hazard, which depends on a and b,
 # has uncertainty, that is, it has a standard error. Derive the standard error for h(t) and plot a
-# 95% confidence interval around the hazard (see item 2.).
+# 95% confidence interval around the hazard (see item 2).
 
 
 # --- estimate median life span 
