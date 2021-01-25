@@ -129,8 +129,8 @@ lifespan %>%
   mutate(hazard = dweibull(lifespan, shape = a_hat, scale = b_hat)/(1-pweibull(lifespan, shape = a_hat, scale = b_hat)),
          a_hat = a_hat,
          b_hat = b_hat,
-         g.a = (1/b_hat) * ((lifespan/b_hat)^(a_hat)) * (1 + (a_hat/b_hat) * (log(lifespan/b_hat))),
-         g.b = ((-1)*(1/(b_hat^2))) * (a_hat * ((lifespan/b_hat)^(a_hat-1)) + (a_hat - 1 ) * ((lifespan/b_hat)^(a_hat-2)) * lifespan),
+         g.a = ((lifespan/b_hat)^a_hat) * (1/lifespan + (a_hat/lifespan) * log(lifespan/b_hat) ),
+         g.b = (-1) * ((a_hat * a_hat) / (lifespan * b_hat)) * ((lifespan/b_hat)^a_hat),
          v11 = v11,
          v21 = v21,
          v12 = v12,
@@ -148,7 +148,7 @@ lines(lifespan_ci$ci_high)
 
 
 ###################################################################################################
-# Q5. Similarly, the estimated Weibull survival function S(t) has a standard
+# Q6. Similarly, the estimated Weibull survival function S(t) has a standard
 # error. Is this s.e. uniform or does it change with t? Can you explain the result?
 
 
@@ -165,15 +165,15 @@ lifespan_surv %>%
   mutate(survival = (pweibull(lifespan, shape = a_hat, scale = b_hat, lower.tail = FALSE)),
          a_hat = a_hat,
          b_hat = b_hat,
-         g.a = (-1)*exp((-1)*((lifespan/b_hat)^a_hat)) * ((lifespan/b_hat)^a_hat) * log(lifespan/b_hat),
-         g.b = (a_hat/b_hat)*exp((-1)*((lifespan/b_hat)^a_hat)) * ((lifespan/b_hat)^a_hat),
+         g.a.s = (-1)*exp((-1)*((lifespan/b_hat)^a_hat)) * ((lifespan/b_hat)^a_hat) * log(lifespan/b_hat),
+         g.b.s = (a_hat/b_hat)*exp((-1)*((lifespan/b_hat)^a_hat)) * ((lifespan/b_hat)^a_hat),
          v11 = v11,
          v21 = v21,
          v12 = v12,
          v22 = v22,
-         se.q = sqrt(g.a * g.a * v11 + g.a * g.b * v21 + g.a * g.b * v12 + g.b * g.b * v22),
-         ci_low = hazard - 1.96 * se.q,
-         ci_high = hazard + 1.96 * se.q
+         se.q.s = sqrt(g.a.s * g.a.s * v11 + g.a.s * g.b.s * v21 + g.a.s * g.b.s * v12 + g.b.s * g.b.s * v22),
+         ci_low = survival - 1.96 * se.q.s,
+         ci_high = survival + 1.96 * se.q.s
   ) -> lifespan_surv_ci
 
 
