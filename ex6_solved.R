@@ -54,7 +54,7 @@ b_hat <- mle.w$par[2]
 
 # Optimized Weibull hazard
 hazard <- dweibull(1:60, shape = a_hat, scale = b_hat)/(1-pweibull(1:60, shape = a_hat, scale = b_hat))
-plot(log(hazard))
+plot(hazard)
 
 
 ################################################################################
