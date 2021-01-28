@@ -142,8 +142,8 @@ lifespan %>%
   
 # Plotting the final result of the delta method for h(t)
 plot(lifespan_ci$lifespan, lifespan_ci$hazard)
-lines(lifespan_ci$ci_low)
-lines(lifespan_ci$ci_high)
+lines(lifespan_ci$ci_low, col="red", lty = 3, lwd = 3)
+lines(lifespan_ci$ci_high, col="red", lty = 3, lwd =3)
 
 
 
@@ -179,5 +179,56 @@ lifespan_surv %>%
 
 # Plotting the final result of the delta method for h(t)
 plot(lifespan_surv_ci$lifespan, lifespan_surv_ci$survival)
-lines(lifespan_surv_ci$ci_low, col="red", lwd=2)
-lines(lifespan_surv_ci$ci_high, col="blue", lwd=2)
+lines(lifespan_surv_ci$ci_low, col="red", lty = 1, lwd = 1)
+lines(lifespan_surv_ci$ci_high, col="red", lty = 1, lwd = 1)
+
+
+#############################################
+# Alternative solution (R base) for Q6
+
+
+# Create a function to do the matrix multiplication and just returning and atomic vector
+# Loop for the desire vector of "time" and save the calculation inside a new vector to be used
+# by R base
+
+
+gradient_survival_weibull <- function(t){
+  
+  # Optimized parameters
+  a_hat <-  mle.w$par[1]
+  b_hat <-  mle.w$par[2]
+  
+  # Var-Cov matrix from optimization
+  V <- V
+  
+  # Gradient for parameter a for S(t) for Weibull:
+  g.a <- (-1)*exp((-1)*((t/b_hat)^a_hat)) * ((t/b_hat)^a_hat) * log(t/b_hat)
+  # Gradient for parameter b for S(t) for Weibull:
+  g.b <- (a_hat/b_hat)*exp((-1)*((t/b_hat)^a_hat)) * ((t/b_hat)^a_hat)
+  
+  # Putting it together
+  gradient <- c(g.a, g.b)
+  
+  # Matrix multiplication:
+  se.q <- sqrt( t(gradient) %*% V %*% gradient)
+  
+  # Getting back what we need
+  return(se.q)
+  
+}
+
+# Create empty vector to fill
+se.q.gradient <- rep(NA,60)
+
+# Loop through the possible values of t and apply the previous function to calculate
+# standard errors for S(t) Weibull based on optimization
+for (t in 0:60) {
+  
+  se.q.gradient[t] <- gradient_survival_weibull(t)
+  
+}
+
+
+# Check
+cbind(lifespan_surv_ci$lifespan, lifespan_surv_ci$se.q.s, se.q.gradient)
+# All looks good :D
